@@ -1,6 +1,6 @@
 package com.retriable.wvjsb;
 
-public class Message {
+class Message {
     String id;
     String type;
     String from;
@@ -10,7 +10,6 @@ public class Message {
 
     Message(String s) throws Exception{
         super();
-
     }
     String string() throws Exception{
 

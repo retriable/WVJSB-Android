@@ -51,35 +51,12 @@ public final class Server {
         return connections.get(s);
     }
 
-
+    private HashMap<String,Connection> connections=new HashMap<>();
     private String namespace;
     private WebView webView;
-    private static final String queryFormat=";(function(){try{ return window['%s_wvjsb_proxy'].query();}catch(e){return []}; })();";
-    private static final String sendFormat=";(function(){try{return window['%s_wvjsb_proxy'].send('%s');}catch(e){return ''};})();";
-    private HashMap<String,Connection> connections=new HashMap<>();
-    private static final Pattern pattern= Pattern.compile("^https://wvjsb/([^/]+)/([^/]+)$");
-    private static WeakHashMap<WebView, HashMap<String, Server>> serversByWebView=new WeakHashMap<>();
 
     private void putConnection(Connection connection){
         connections.put(connection.id,connection);
-    }
-
-    private void handleMessage(Message message){
-
-    }
-
-    private void sendMessage(Message message){
-        try {//how to do when api level < 19?
-            webView.evaluateJavascript(String.format(sendFormat, namespace, CorrectedJSString(message.string())), new ValueCallback<String>() {
-                @Override
-                public void onReceiveValue(String s) {
-                    try {
-                        Message message = new Message(s);
-                        handleMessage(message);
-                    } catch (Exception e) {}
-                }
-            });
-        }catch (Exception e){}
     }
 
     private void install(){
@@ -90,10 +67,18 @@ public final class Server {
         webView.evaluateJavascript(String.format(queryFormat,namespace),new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String s) {
-                try {
-                    Message message=new Message(s);
-                    handleMessage(message);
-                }catch (Exception e){}
+//                s 是JSON数组
+//                postMessage(s);
+            }
+        });
+    }
+
+
+    private void sendMessage(String s){
+        webView.evaluateJavascript(String.format(sendFormat, namespace, correctedJSString(s)), new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String s) {
+
             }
         });
     }
@@ -102,8 +87,11 @@ public final class Server {
     public void postMessage(String s){
         try {
             Message message=new Message(s);
-            handleMessage(message);
-        }catch (Exception e){}
+
+        }catch (Exception e){
+
+        }
+
     }
 
     private Server(WebView webView,String namespace){
@@ -112,6 +100,11 @@ public final class Server {
         this.namespace=namespace;
         this.webView.addJavascriptInterface(this,namespace);
     }
+
+    private static final String queryFormat=";(function(){try{ return window['%s_wvjsb_proxy'].query();}catch(e){return []}; })();";
+    private static final String sendFormat=";(function(){try{return window['%s_wvjsb_proxy'].send('%s');}catch(e){return ''};})();";
+    private static final Pattern pattern= Pattern.compile("^https://wvjsb/([^/]+)/([^/]+)$");
+    private static final WeakHashMap<WebView, HashMap<String, Server>> serversByWebView=new WeakHashMap<>();
 
     private static Server get(WebView webView, String namespace, boolean flag) throws Exception{
         if (webView==null) {
@@ -132,13 +125,15 @@ public final class Server {
         }
     }
 
-    private static String CorrectedJSString(String s){
+    private static String correctedJSString(String s){
         s=s.replace("\\","\\\\");
         s=s.replace("\"","\\\"");
         s=s.replace("\'","\\\'");
         s=s.replace("\n","\\n");
         s=s.replace("\r","\\r");
         s=s.replace("\f","\\f");
+        s=s.replace("\b","\\b");
+        s=s.replace("\t","\\t");
         s=s.replace("\u2028","\\u2028");
         s=s.replace("\u2029","\\u2029");
         return s;
