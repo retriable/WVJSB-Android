@@ -2,15 +2,16 @@ package com.retriable.wvjsb;
 
 import com.retriable.wvjsb.Functions.Function3;
 import com.retriable.wvjsb.Functions.Function2;
+import com.retriable.wvjsb.Functions.Function2Void;
 import com.retriable.wvjsb.Functions.Function1Void;
 
 public final class Handler {
-    private Function3<Connection,Object,Function2<Object,Error,Void>,Object> _onEvent;
-    private Function1Void<Object> _onCancel;
-    public final Handler onEvent(final Function3<Connection,Object,Function2<Object,Error,Void>,Object> onEvent){
-        _onEvent = new Function3<Connection, Object, Function2<Object, Error, Void>, Object>() {
+    Function3<Connection,Object,Function2Void<Object,Error>,Object> _onEvent;
+    Function1Void<Object> _onCancel;
+    public final Handler onEvent(final Function3<Connection,Object,Function2Void<Object,Error>,Object> onEvent){
+        _onEvent = new Function3<Connection, Object, Function2Void<Object, Error>, Object>() {
             @Override
-            public Object invoke(Connection connection, Object o, Function2<Object, Error, Void> done) {
+            public Object invoke(Connection connection, Object o, Function2Void<Object, Error> done) {
                 return onEvent.invoke(connection,o,done);
             }
         };

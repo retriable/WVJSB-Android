@@ -6,15 +6,23 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
+import com.alibaba.fastjson.JSON;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.retriable.wvjsb.Functions.Function1Void;
+import com.retriable.wvjsb.Functions.Function2Void;
+import com.retriable.wvjsb.Functions.Function4Void;
 
 public final class Server {
 
+    public final HashMap<String,Connection> connections=new HashMap<>();
+
     /*get server and create one if not exist*/
-    public static @NonNull Server getInstance(@NonNull WebView webView,@Nullable String namespace) throws Exception{
+    public static final @NonNull Server getInstance(@NonNull WebView webView,@Nullable String namespace) throws Exception{
         if (namespace==null||namespace.length()==0){
             namespace="wvjsb_namespace";
         }
@@ -22,7 +30,7 @@ public final class Server {
     }
 
     /*can handle url*/
-    public static boolean canHandle(@NonNull WebView webView,@NonNull String urlString) throws Exception{
+    public static final boolean canHandle(@NonNull WebView webView,@NonNull String urlString) throws Exception{
         Matcher matcher=pattern.matcher(urlString);
         if (matcher==null) return false;
         if (!matcher.find()) return false;
@@ -43,54 +51,100 @@ public final class Server {
         return true;
     }
 
-    public void on(@NonNull String type){
+    public final void on(@NonNull String type){
 
     }
 
-    public @Nullable Connection getConnection(@NonNull String s){
-        return connections.get(s);
-    }
-
-    private HashMap<String,Connection> connections=new HashMap<>();
+    private HashMap<String,Handler> handlers=new HashMap<>();
     private String namespace;
     private WebView webView;
 
-    private void putConnection(Connection connection){
-        connections.put(connection.id,connection);
-    }
-
     private void install(){
         //怎么添加资源文件啊？
+
     }
 
     private void query(){
         webView.evaluateJavascript(String.format(queryFormat,namespace),new ValueCallback<String>() {
             @Override
-            public void onReceiveValue(String s) {
-//                s 是JSON数组
-//                postMessage(s);
+            public void onReceiveValue(String string) {
+                ArrayList<String> arr= (ArrayList<String>)JSON.parse(string);
+                for (String s: arr) {
+                    postMessage(s);
+                }
             }
         });
     }
 
+    private void sendMessage(String s, ValueCallback<String> callback){
+        webView.evaluateJavascript(String.format(sendFormat, namespace, correctedJSString(s)), callback);
+    }
 
-    private void sendMessage(String s){
-        webView.evaluateJavascript(String.format(sendFormat, namespace, correctedJSString(s)), new ValueCallback<String>() {
-            @Override
-            public void onReceiveValue(String s) {
-
+    private void send(Message message, ValueCallback<String> callback){
+        try{
+            String s = message.string();
+            if (s.length()==0){
+                callback.onReceiveValue("");
+                return;
             }
-        });
+            sendMessage(s, callback);
+        }catch (Exception e){
+
+        }
     }
 
     @JavascriptInterface
     public void postMessage(String s){
         try {
             Message message=new Message(s);
+            if (message.from==null||message.from.equals("")){
+                Handler handler=handlers.get("disconnect");
+                if (handler!=null){
+                    for (Connection connection: connections.values()) {
+                        handler._onEvent.invoke(connection, null, new Function2Void<Object, Error>() {
+                            @Override
+                            public void invoke(Object o, Error error) {
 
-        }catch (Exception e){
+                            }
+                        });
+                    }
+                }
+                connections.clear();
+                return;
+            }
+            if (!message.to.equals(namespace)){
+                return;
+            }
+            if (message.type.equals("connect")){
+                Connection connection=connections.get(message.from);
+                if (connection!=null) return;
+                connection=new Connection(message.parameter, new Function4Void<Connection, String, String
+                        , Object>() {
+                    @Override
+                    public void invoke(Connection connection, String id, String type, Object parameter) {
+                        Message m=new Message();
+                        m.id=id;
+                        m.type=type;
+                        m.parameter=parameter;
+//                        m.from=message.to;
+//                        m.to=message.from;
 
-        }
+                        send(m, new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String value) {
+                                boolean success=value.length()>0;
+                                if (!success){
+//                                    connection.ack(m.id,null,new Error(""));
+                                }
+                            }
+                        });
+                    }
+                });
+                connections.put(message.from,connection);
+                connection.event("connect",null);
+
+            }
+        }catch (Exception e){}
 
     }
 
