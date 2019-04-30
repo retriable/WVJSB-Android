@@ -9,35 +9,33 @@ internal class Message {
     var from:String?=null
     var to:String?=null
     var parameter:Any?=null
-    var error:Error?=null
+    var t: Throwable?=null
 
     constructor()
 
     @Throws(Exception::class)
     constructor(s:String){
-        val o = JSON.parse(s)
-        if (o is Map<*,*>){
-           o.forEach { entry->
-               var value = entry.value
-               when(entry.key){
-                   "id" -> id = value as? String
-                   "type"-> type = value as? String
-                   "from"-> from = value as? String
-                   "to"-> to = value as? String
-                   "parameter"-> parameter = value
-                   "error"-> {
-                       when(value){
-                           is String->error=Error(value)
-                           is Map<*,*>->{
-                               value= value["description"]
-                               if (value is String){
-                                   error=Error(value)
-                               }
-                           }
-                       }
-                   }
-               }
-           }
+        val o = JSON.parse(s) as Map<*,*>
+        o.forEach { entry->
+            var value = entry.value
+            when(entry.key){
+                "id" -> id = value as? String
+                "type"-> type = value as? String
+                "from"-> from = value as? String
+                "to"-> to = value as? String
+                "parameter"-> parameter = value
+                "error"-> {
+                    when(value){
+                        is String->t= Throwable(value)
+                        is Map<*,*>->{
+                            value= value["description"]
+                            if (value is String){
+                                t=Throwable(value)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -48,7 +46,7 @@ internal class Message {
         map["from"]=from
         map["to"]=to
         map["parameter"]=parameter
-        map["error"]=error?.message
+        map["error"]=t?.message
         return JSON.toJSONString(map)
     }
 }

@@ -11,8 +11,8 @@ internal class ServerInternal(private var webView: WebView,private var namespace
     }
 
     companion object {
-        val queryFormat : String = ";(function(){try{ return window['%s_wvjsb_proxy'].query();}catch(e){return []}; })();"
-        val sendFormat : String = ";(function(){try{return window['%s_wvjsb_proxy'].send('%s');}catch(e){return ''};})();"
+        const val queryFormat : String = ";(function(){try{ return window['%s_wvjsb_proxy'].query();}catch(e){return []}; })();"
+        const val sendFormat : String = ";(function(){try{return window['%s_wvjsb_proxy'].send('%s');}catch(e){return ''};})();"
         fun correctedJSString(str: String): String {
             var s = str
             s = s.replace("\\", "\\\\")
@@ -34,38 +34,141 @@ internal class ServerInternal(private var webView: WebView,private var namespace
     }
 
     fun query(){
-        webView.evaluateJavascript(queryFormat){value ->
-            val o =JSON.parse(value)
-            if (o is ArrayList<*>){
-                for (s:Any in o){
-                    if (s is String){
-                        postMessage(s)
+        try {
+            webView.evaluateJavascript(String.format(queryFormat,namespace)){value ->
+                try{
+                    val o =JSON.parse(value) as ArrayList<*>
+                    for (s in o){
+                        postMessage(s as String)
                     }
-                }
+                }catch (e:Throwable){}
             }
-        }
+        }catch(e:Throwable){}
     }
 
     @JavascriptInterface
     fun postMessage(s:String){
         val message=Message(s)
-
+        try {
+            val from=message.from!!
+            if (!message.to.equals(namespace)) {
+                return
+            }
+            when(message.type){
+                "disconnect"->{
+                    try {
+                        val connection=connections[from]!!
+                        connections.remove(from)
+                        handlers["disconnect"]?.eventClosure?.invoke(connection,null) {
+                            { _, _ ->
+                            }
+                        }
+                    }catch(e:Throwable){}
+                }
+                "connect"->{
+                    try {
+                        var connection=connections[from]
+                        if (connection!=null){
+                            return
+                        }
+                        connection = Connection(message.parameter){
+                            c_,id_,type_,parameter_->
+                            val m=Message()
+                            m.id=id_
+                            m.type=type_
+                            m.parameter=parameter_
+                            m.from=namespace
+                            m.to=from
+                            sendMessage(m){v->
+                                if (v!=null){
+                                    c_.ack(id_,null,v)
+                                }
+                            }
+                        }
+                        connections[from]=connection
+                    }catch(e:Throwable){}
+                }
+                "ack"->{
+                    try {
+                        val id=message.id!!
+                        connections[from]?.ack(id,message.parameter,message.t)
+                    }catch(e:Throwable){}
+                }
+                "cancel"->{
+                    try {
+                        val id=message.id!!
+                        cancelClosures[id]?.invoke()
+                    }catch(e:Throwable){}
+                }
+                else ->{
+                    try{
+                        val id=message.id!!
+                        val type=message.type!!
+                        val connection=connections[from]!!
+                        val handler=handlers[type]!!
+                        val event=handler.eventClosure!!
+                        val cancelKey=String.format("%s-%s",from,id)
+                        val context = event.invoke(connection,message.parameter){
+                            {
+                                result,t->
+                                val m=Message()
+                                m.id=id
+                                m.type="ack"
+                                m.parameter=result
+                                m.t=t
+                                m.from=namespace
+                                m.to=from
+                                sendMessage(m,null)
+                            }
+                        }
+                        val cancelClosure=handler.cancelClosure!!
+                        cancelClosures[cancelKey]={
+                            cancelClosure(context)
+                        }
+                    }catch(e:Throwable){}
+                }
+            }
+        }catch(e:Throwable){
+            try {
+                val event = handlers["disconnect"]!!.eventClosure!!
+                connections.values.forEach { c->
+                    event(c,null){
+                        {_,_->
+                        }
+                    }
+                }
+            }catch(e:Throwable){}
+        }
     }
 
-    fun sendMessage(m:Message,callback:((Boolean)->Unit)?){
-        var s = m.string()
-        if (s.length==0) {
-            return
-        }
-        s = String.format(sendFormat, namespace, correctedJSString(s))
-        webView.evaluateJavascript(s){
-            value->
-            if (callback!=null) callback(value.length>0)
+    private fun sendMessage(m:Message,callback:((Throwable?)->Unit)?){
+        try{
+            webView.evaluateJavascript(String.format(sendFormat, namespace, correctedJSString(m.string()))){
+                value->
+                try {
+                    if (value.isEmpty()){
+                        throw Throwable("evaluateJavascript failed")
+                    }
+                    callback?.invoke(null)
+                }catch(e:Throwable){
+                    callback?.invoke(e)
+                }
+            }
+        }catch (e:Throwable){
+            callback?.invoke(e)
         }
     }
 
     fun on(type: String) {
-
+        var handler=handlers[type]
+        if (handler!=null){
+            return
+        }
+        handler= Handler()
+        handlers[type]=handler
     }
 
+    private val handlers=HashMap<String,Handler>()
+    private val connections=HashMap<String,Connection>()
+    private val cancelClosures=HashMap<String,()->Unit>()
 }

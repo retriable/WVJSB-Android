@@ -20,7 +20,6 @@ public final class Server {
         return get(webView,namespace,true);
     }
 
-    /*can handle url*/
     public static boolean canHandle(@NonNull WebView webView,@NonNull String urlString){
         Matcher matcher=pattern.matcher(urlString);
         if (matcher==null) return false;

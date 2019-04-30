@@ -2,16 +2,14 @@ package com.retriable.wvjsb
 
 class Handler {
 
-
-    fun onEvent(onEvent:(connection: Connection,parameter: Any?,done:()->((result:Any?,error:Error?)->Any?))->Unit){
-
+    fun onEvent(closure:((connection: Connection,parameter: Any?,done:()->((result:Any?,t:Throwable?)->Unit))->Any?)){
+        this.eventClosure=closure
     }
 
-    fun onCancel(onCancel:(context:Any?)->Unit){
-
+    fun onCancel(closure:(context:Any?)->Unit){
+        this.cancelClosure=closure
     }
 
-    internal var _onEvent:((connection: Connection,parameter: Any?,done:()->((result:Any?,error:Error?)->Any?))->Unit)?=null
-    internal var _onCancel:((context:Any?)->Unit)?=null
-
+    internal var eventClosure:((connection: Connection, parameter: Any?, done:()->((result:Any?, t:Throwable?)->Unit))->Any?)?=null
+    internal var cancelClosure:((context:Any?)->Unit)?=null
 }
