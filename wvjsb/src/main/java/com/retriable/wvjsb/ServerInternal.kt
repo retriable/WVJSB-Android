@@ -3,6 +3,7 @@ package com.retriable.wvjsb
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.alibaba.fastjson.JSON
+import java.io.BufferedReader
 
 internal class ServerInternal(private var webView: WebView,private var namespace: String){
 
@@ -30,7 +31,12 @@ internal class ServerInternal(private var webView: WebView,private var namespace
     }
 
     fun install(){
-
+        try {
+            val js = BufferedReader(webView.context.assets.open("Proxy.js").reader()).readText()
+            webView.evaluateJavascript(js.replace("wvjsb_namespace",namespace)){value ->
+                System.console()?.printf("\n%s",value)
+            }
+        }catch (t:Throwable){}
     }
 
     fun query(){
