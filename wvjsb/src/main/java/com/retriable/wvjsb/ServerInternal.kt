@@ -169,13 +169,14 @@ internal class ServerInternal(private var webView: WebView, private var namespac
         }
     }
 
-    fun on(type: String) {
+    fun on(type: String):Handler {
         var handler = handlers[type]
         if (handler != null) {
-            return
+            return handler
         }
         handler = Handler()
         handlers[type] = handler
+        return handler
     }
 
     private val handlers = HashMap<String, Handler>()

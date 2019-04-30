@@ -41,8 +41,8 @@ public final class Server {
         return true;
     }
 
-    public void on(@NonNull String type){
-        internal.on(type);
+    public Handler on(@NonNull String type){
+        return internal.on(type);
     }
 
     private static WeakHashMap<WebView, HashMap<String, Server>> serversByWebView=new WeakHashMap<>();
