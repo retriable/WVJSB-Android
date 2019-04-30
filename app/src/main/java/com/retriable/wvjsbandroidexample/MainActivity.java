@@ -1,6 +1,8 @@
 package com.retriable.wvjsbandroidexample;
 
+import android.annotation.TargetApi;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.WebChromeClient;
@@ -26,13 +28,11 @@ public class MainActivity extends AppCompatActivity {
         });
         webView.setWebViewClient(new WebViewClient(){
 
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
-                if(Build.VERSION.SDK_INT > 21){
-                    return !Server.canHandle(view,request.getUrl().toString());
-                }
-                return false;
+                return !Server.canHandle(view,request.getUrl().toString());
 
             }
 
