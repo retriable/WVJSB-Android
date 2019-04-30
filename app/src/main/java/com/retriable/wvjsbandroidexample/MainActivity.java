@@ -81,6 +81,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.loadUrl("http://192.168.2.2:8000");
+        webView.loadUrl("http://192.168.2.2:8000/index.html");
     }
 }
