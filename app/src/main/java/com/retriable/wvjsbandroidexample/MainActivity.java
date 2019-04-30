@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -28,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        WebView webView = findViewById(R.id.web_view);
+        final WebView webView = findViewById(R.id.web_view);
 
         Server server = Server.getInstance(webView,null);
 
@@ -71,24 +72,35 @@ public class MainActivity extends AppCompatActivity {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-
+                Log.d("","url:"+request.getUrl().toString());
                 return !Server.canHandle(view,request.getUrl().toString());
 
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.d("","url:"+url);
                 return !Server.canHandle(view,url);
             }
         });
+
+        webView.setWebContentsDebuggingEnabled(true);
+
+        webView.getSettings().setJavaScriptEnabled(true);
 
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //todo
+                reload();
             }
         });
+        reload();
+    }
 
+    private void reload(){
+        final WebView webView = findViewById(R.id.web_view);
+        webView.reload();
         webView.loadUrl("http://192.168.2.2:8000/index.html");
     }
 }
