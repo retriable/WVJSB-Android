@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -36,8 +37,7 @@ public class MainActivity extends AppCompatActivity {
         server.on("immediate").onEvent(new Function3<Connection, Object, Function0<? extends Function2<Object,? super Throwable, Unit>>, Object>() {
             @Override
             public Object invoke(Connection connection, Object o, Function0<? extends Function2<Object, ? super Throwable, Unit>> function0) {
-
-                function0.invoke();
+                function0.invoke().invoke("immediate ack",null);
                 return null;
             }
         });
@@ -69,19 +69,25 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new WebViewClient(){
 
-            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Log.d("","url:"+request.getUrl().toString());
-                return !Server.canHandle(view,request.getUrl().toString());
-
+            public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                Log.d("web","url:"+url);
+                if (Server.canHandle(view,url)){
+                    return null;
+                }
+                return super.shouldInterceptRequest(view, url);
             }
 
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.d("","url:"+url);
-                return !Server.canHandle(view,url);
+            public WebResourceResponse shouldInterceptRequest(WebView view,
+                                                              WebResourceRequest request) {
+                Log.d("web","url:"+request.toString());
+                if (Server.canHandle(view,request.toString())){
+                    return null;
+                }
+                return super.shouldInterceptRequest(view, request);
             }
+
         });
 
         webView.setWebContentsDebuggingEnabled(true);
@@ -101,6 +107,6 @@ public class MainActivity extends AppCompatActivity {
     private void reload(){
         final WebView webView = findViewById(R.id.web_view);
         webView.reload();
-        webView.loadUrl("http://192.168.2.2:8000/index.html");
+        webView.loadUrl("http://192.168.0.3:8000/index.html");
     }
 }

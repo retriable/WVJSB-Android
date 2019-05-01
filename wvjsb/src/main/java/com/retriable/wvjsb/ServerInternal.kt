@@ -1,5 +1,6 @@
 package com.retriable.wvjsb
 
+import android.os.Looper
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.alibaba.fastjson.JSON
@@ -34,21 +35,25 @@ internal class ServerInternal(private var webView: WebView, private var namespac
     fun install() {
         val reader = BufferedReader(webView.context.assets.open("Proxy.js").reader())
         val js = reader.readText()
-        webView.evaluateJavascript(js.replace("wvjsb_namespace", namespace)) { value ->
-            System.console()?.printf("\n%s", value)
+        webView.post{
+            webView.evaluateJavascript(js.replace("wvjsb_namespace", namespace)) { value ->
+                System.console()?.printf("\n%s", value)
+            }
         }
         reader.close()
     }
 
     fun query() {
-        webView.evaluateJavascript(String.format(queryFormat, namespace)) { value ->
-            try {
-                val o = JSON.parse(value) as ArrayList<*>
-                for (s in o) {
-                    postMessage(s as String)
+        webView.post{
+            webView.evaluateJavascript(String.format(queryFormat, namespace)) { value ->
+                try {
+                    val o = JSON.parse(value) as ArrayList<*>
+                    for (s in o) {
+                        postMessage(s as String)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
@@ -92,6 +97,11 @@ internal class ServerInternal(private var webView: WebView, private var namespac
                                 }
                             }
                         }
+                        val m = Message()
+                        m.type="connect"
+                        m.from=namespace
+                        m.to=from
+                        sendMessage(m,null)
                         connections[from] = connection
                     } catch (e: Throwable) {
                     }
@@ -153,7 +163,7 @@ internal class ServerInternal(private var webView: WebView, private var namespac
     }
 
     private fun sendMessage(m: Message, callback: ((Throwable?) -> Unit)?) {
-        try {
+        webView.post{
             webView.evaluateJavascript(String.format(sendFormat, namespace, correctedJSString(m.string()))) { value ->
                 try {
                     if (value.isEmpty()) {
@@ -164,8 +174,6 @@ internal class ServerInternal(private var webView: WebView, private var namespac
                     callback?.invoke(e)
                 }
             }
-        } catch (e: Throwable) {
-            callback?.invoke(e)
         }
     }
 
