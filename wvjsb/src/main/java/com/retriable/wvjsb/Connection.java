@@ -1,30 +1,67 @@
 package com.retriable.wvjsb;
 
+import com.retriable.wvjsb.Functions.Function1Void;
+import com.retriable.wvjsb.Functions.Function3Void;
+
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
-import com.retriable.wvjsb.Functions.Function4Void;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Connection {
-    public Object info;
+public final class Connection {
 
-    public Operation event(String type,Object parameter){
-        synchronized (this){
-            String mid=String.format("%d",nextSeq++);
+    public final @Nullable Object info;
 
-        }
-        return null;
+    public Operation event(final String type,@Nullable final Object parameter){
+
+        final String id = String.valueOf(nextSeq.incrementAndGet());
+        final Operation opt=new Operation();
+        opt.callRetain=new Function1Void<Operation>() {
+            @Override
+            public void invoke(Operation o) {
+                synchronized (operations){
+                    operations.put(id,o);
+                }
+            }
+        };
+        opt.callRelease=new Function1Void<Operation>() {
+            @Override
+            public void invoke(Operation o) {
+                synchronized (operations){
+                    operations.remove(id);
+                }
+            }
+        };
+        opt.callCancel=new Function1Void<Operation>() {
+            @Override
+            public void invoke(Operation o) {
+                send.invoke(id,"cancel",null);
+            }
+        };
+        send.invoke(id,type,parameter);
+        return opt;
     }
 
-    Connection(Object info,Function4Void<Connection,String,String,Object> send){
+    Function3Void<String,String,Object> send;
+
+    Connection(@Nullable final Object info){
         super();
         this.info=info;
-        this.send=send;
     }
 
-    void ack(String id,Object result,Error error){
+    void ack(final String id,@Nullable final Object parameter,@Nullable final Throwable throwable){
 
+        Operation operation;
+        synchronized (operations){
+            operation = operations.get(id);
+        }
+        if (null==operation){
+            return;
+        }
+        operation.doAck(parameter,throwable);
     }
-    private Function4Void<Connection,String,String,Object> send;
-    private long nextSeq=0;
-    private HashMap<String,Operation> operations=new HashMap<>();
 
+    private AtomicLong nextSeq=new AtomicLong(0);
+    private final Map<String,Operation> operations=new HashMap<>();
 }

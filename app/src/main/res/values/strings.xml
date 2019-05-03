@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">WVJSB Android Example</string>
+    <string name="Reload">Reload</string>
+    <string name="Immediate">Immediate</string>
+    <string name="Delayed">Delayed</string>
+    <string name="Cancel">Cancel</string>
+
 </resources>
