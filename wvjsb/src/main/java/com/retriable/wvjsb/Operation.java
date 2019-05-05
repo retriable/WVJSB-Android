@@ -29,7 +29,7 @@ public final class Operation {
         }
     }
 
-    public Operation timeout(final long timeout){
+    public Operation timeout(long timeout){
         if (timeout<=0){
             return this;
         }

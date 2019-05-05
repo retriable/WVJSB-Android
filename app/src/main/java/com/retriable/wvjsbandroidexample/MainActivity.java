@@ -34,19 +34,8 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setJavaScriptEnabled(true);
 
         webView.setWebViewClient(new WebViewClient(){
-//            @Override
-//            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-//            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-//                Log.d("app","request: "+request.getUrl().toString());
-//                if (Server.canHandle(webView,request.getUrl().toString())){
-//                    return null;
-//                }
-//                return super.shouldInterceptRequest(view, request);
-//            }
-
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                Log.d("app", "url: " + url);
                 if (Server.canHandle(webView, url)) {
                     return null;
                 }
@@ -89,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public Object invoke(Connection connection, Object o, Function0<Function2Void<Object,
                     Throwable>> function2VoidFunction0) {
-                function2VoidFunction0.invoke().invoke("immediate ack",null);
+                function2VoidFunction0.invoke().invoke("[\\] ['] [\"] [\b] [\f] [\n] [\r] [\t] [\u2028] [\u2029]",null);
                 return null;
             }
         });
@@ -104,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                         if(Math.random()<0.50){
                             function2VoidFunction0.invoke().invoke(null,new Throwable("can not find host"));
                         }else{
-                            function2VoidFunction0.invoke().invoke("delayed ack",null);
+                            function2VoidFunction0.invoke().invoke("[\\] ['] [\"] [\b] [\f] [\n] [\r] [\t] [\u2028] [\u2029]",null);
                         }
                     }
                 };
@@ -124,7 +113,8 @@ public class MainActivity extends AppCompatActivity {
         final WebView webView=findViewById(R.id.webView);
         webView.clearCache(true);
         webView.reload();
-        webView.loadUrl("http://192.168.0.3:8000/index.html");
+        // TODO make sure the URL is consistent to your web server
+        webView.loadUrl("http://192.168.2.2:8000/index.html");
     }
 
     public void immediate(View v){

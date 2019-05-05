@@ -11,13 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 final class Json {
+    private Json(){super();}
+
     /**
      * convert map or list to json string
      * @param o map or list
      * @return string
      * @throws Throwable throwable
      */
-    static String toJsonString(final @Nullable Object o) throws Throwable{
+    static String toJsonString(@Nullable Object o) throws Throwable{
         if ((o instanceof Map) || (o instanceof List)){
             Object oo = toJSONObject(o);
             if (null!=oo){
@@ -33,7 +35,7 @@ final class Json {
      * @return map or list
      * @throws Throwable throwable
      */
-    static Object toJavaObject(final @Nullable String s) throws Throwable{
+    static Object toJavaObject(@Nullable String s) throws Throwable{
         if (null==s){
             throw new NullPointerException("json string can't be null");
         }
@@ -51,7 +53,7 @@ final class Json {
      * @throws Throwable throwable
      */
     @SuppressWarnings("unchecked")
-     private static @Nullable Object toJSONObject(final Object o) throws Throwable {
+     private static @Nullable Object toJSONObject(Object o) throws Throwable {
         if (o instanceof Map){
             final JSONObject object = new JSONObject();
             Map<String,Object> map = (Map<String,Object>)o;

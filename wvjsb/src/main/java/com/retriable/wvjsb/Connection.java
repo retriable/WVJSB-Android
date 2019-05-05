@@ -13,7 +13,7 @@ public final class Connection {
 
     public final @Nullable Object info;
 
-    public Operation event(final String type,@Nullable final Object parameter){
+    public Operation event(String type,@Nullable Object parameter){
 
         final String id = String.valueOf(nextSeq.incrementAndGet());
         final Operation opt=new Operation();
@@ -45,12 +45,12 @@ public final class Connection {
 
     Function3Void<String,String,Object> send;
 
-    Connection(@Nullable final Object info){
+    Connection(@Nullable Object info){
         super();
         this.info=info;
     }
 
-    void ack(final String id,@Nullable final Object parameter,@Nullable final Throwable throwable){
+    void ack(String id,@Nullable Object parameter,@Nullable Throwable throwable){
 
         Operation operation;
         synchronized (operations){

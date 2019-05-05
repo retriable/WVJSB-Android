@@ -1,5 +1,6 @@
 package com.retriable.wvjsb.Functions;
 
+@SuppressWarnings("unused")
 public interface Function2<T1,T2,R> {
-    R invoke(final T1 t1,final T2 t2);
+    R invoke(T1 t1,T2 t2);
 }

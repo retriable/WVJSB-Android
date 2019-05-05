@@ -25,27 +25,27 @@ class Message {
     }
 
     @SuppressWarnings("unchecked")
-    Message(@Nullable final String s) throws Throwable{
+    Message(@Nullable String s) throws Throwable{
         this();
         if (null==s||s.isEmpty()){
             return;
         }
         Map<String,Object> map = (Map<String,Object>) Json.toJavaObject(s);
-        Object id_ = map.get("id");
-        if (null!=id_){
-            id=(String)id_;
+        Object o = map.get("id");
+        if (null!=o){
+            id=(String)o;
         }
-        Object type_ = map.get("type");
-        if (null!=type_){
-            type=(String)type_;
+        o = map.get("type");
+        if (null!=o){
+            type=(String)o;
         }
-        Object from_ = map.get("from");
-        if (null!=from_){
-            from=(String)from_;
+        o = map.get("from");
+        if (null!=o){
+            from=(String)o;
         }
-        Object to_ = map.get("to");
-        if (null!=to_){
-            to=(String)to_;
+        o = map.get("to");
+        if (null!=o){
+            to=(String)o;
         }
         parameter = map.get("parameter");
         Object error = map.get("error");

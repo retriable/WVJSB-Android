@@ -7,12 +7,12 @@ import com.retriable.wvjsb.Functions.Function3;
 
 public final class Handler {
 
-    public Handler onEvent(final Function3<Connection,Object,Function0<Function2Void<Object,Throwable>>,Object> event){
+    public Handler onEvent(Function3<Connection,Object,Function0<Function2Void<Object,Throwable>>,Object> event){
         this.event=event;
         return this;
     }
 
-    public void onCancel(final Function1Void<Object> cancel){
+    public void onCancel(Function1Void<Object> cancel){
         this.cancel=cancel;
     }
 

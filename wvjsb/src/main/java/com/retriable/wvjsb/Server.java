@@ -12,10 +12,8 @@ import com.retriable.wvjsb.Functions.Function3Void;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.regex.Matcher;
@@ -23,7 +21,7 @@ import java.util.regex.Pattern;
 
 public final class Server {
 
-    public static Server instance(final WebView webView, @Nullable String namespace){
+    public static Server instance(WebView webView, @Nullable String namespace){
         if (null==namespace||namespace.isEmpty()){
             namespace="wvjsb_namespace";
         }
@@ -31,7 +29,7 @@ public final class Server {
     }
 
     /*can handle url*/
-    public static boolean canHandle(final WebView webView,@Nullable final String urlString){
+    public static boolean canHandle(WebView webView,@Nullable String urlString){
         Matcher matcher=pattern.matcher(urlString);
         if (!matcher.find()) return false;
         final String namespace=matcher.group(1);
@@ -44,13 +42,15 @@ public final class Server {
                 break;
             case "query":
                 //is unreachable for android platform.
-                server.query();
+//               server.query();
                 break;
+                default:
+                    break;
         }
         return true;
     }
 
-    public final Handler on(final String type){
+    public final Handler on(String type){
         Handler handler;
         synchronized (handlers){
             handler = handlers.get(type);
@@ -64,37 +64,25 @@ public final class Server {
     }
 
     private void install(){
-        try{
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(webView.getContext().getAssets().open("Proxy.js")));
-            final StringBuilder builder =new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line).append("\n");
-            }
-            reader.close();
-            evaluate(builder.toString().replace("wvjsb_namespace", namespace), null);
-        }catch (Throwable t){
-            t.printStackTrace();
-        }
+        evaluate(installJs.replace("wvjsb_namespace",namespace),null);
     }
 
-    private void query(){
-        evaluate(String.format(queryFormat, namespace), new ValueCallback<String>() {
-            @Override
-            public void onReceiveValue(String value) {
-                try{
-                    // TODO: 2019-05-03 Deserialization error
-                    value = StringEscapeUtils.unescapeJavaScript(value);
-                    List list = (List)Json.toJavaObject(value);
-                    for (Object o :list){
-                        postMessage((String)o);
-                    }
-                }catch (Throwable t){
-                    t.printStackTrace();
-                }
-            }
-        });
-    }
+//    private void query(){
+//        evaluate(String.format(queryFormat, namespace), new ValueCallback<String>() {
+//            @Override
+//            public void onReceiveValue(String value) {
+//                try{
+//                    value = StringUtils.unescape(value.substring(1,value.length()-1));
+//                    List list = (List)Json.toJavaObject(value);
+//                    for (Object o :list){
+//                        postMessage((String)o);
+//                    }
+//                }catch (Throwable t){
+//                    t.printStackTrace();
+//                }
+//            }
+//        });
+//    }
 
     private void evaluate(final String string, final ValueCallback<String> valueCallback){
         final Runnable runnable=new Runnable() {
@@ -110,11 +98,11 @@ public final class Server {
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"unused"})
     @JavascriptInterface
     public void postMessage(String s){
         try {
-          final Message message=new Message(s);
+            final Message message=new Message(s);
             final String from = message.from;
             final String to = message.to;
             final String type = message.type;
@@ -183,7 +171,7 @@ public final class Server {
                             message.from=namespace;
                             message.to=from;
                             try{
-                                evaluate(String.format(sendFormat, namespace, correctedJSString(message.string())), new ValueCallback<String>() {
+                                evaluate(String.format(sendFormat, namespace, StringUtils.escape(message.string())), new ValueCallback<String>() {
                                     @Override
                                     public void onReceiveValue(String value) {
                                         if (value.isEmpty()){
@@ -264,7 +252,7 @@ public final class Server {
                             message.parameter=o;
                             message.throwable=throwable;
                             try{
-                                evaluate(String.format(sendFormat, namespace, correctedJSString(message.string())), null);
+                                evaluate(String.format(sendFormat, namespace, StringUtils.escape(message.string())), null);
                             }catch (Throwable t){
                                 t.printStackTrace();
                             }
@@ -293,7 +281,7 @@ public final class Server {
         this.webView=webView;
         this.namespace=namespace;
         this.proxy=namespace+"_wvjsb_proxy";
-//        this.webView.addJavascriptInterface(this,namespace);
+        this.webView.addJavascriptInterface(this,namespace);
     }
 
     private final Map<String,Handler> handlers=new HashMap<>();
@@ -302,7 +290,8 @@ public final class Server {
     private final WebView webView;
     private final Map<String,Connection> connections=new HashMap<>();
     private final Map<String, Function0Void> cancels=new HashMap<>();
-    private static final String queryFormat=";(function(){try{ return window['%s_wvjsb_proxy'].query();}catch(e){return '[]'}; })();";
+    @SuppressWarnings("unused")
+    private static final String queryFormat=";(function(){try{return window['%s_wvjsb_proxy'].query();}catch(e){return '[]'};})();";
     private static final String sendFormat=";(function(){try{return window['%s_wvjsb_proxy'].send('%s');}catch(e){return ''};})();";
     private static final Pattern pattern= Pattern.compile("^https://wvjsb/([^/]+)/([^/]+)$");
     private static final WeakHashMap<WebView, HashMap<String, Server>> serversByWebView=new WeakHashMap<>();
@@ -333,17 +322,129 @@ public final class Server {
         }
     }
 
-    private static String correctedJSString(String s){
-        s=s.replace("\\","\\\\");
-        s=s.replace("\"","\\\"");
-        s=s.replace("\'","\\\'");
-        s=s.replace("\n","\\n");
-        s=s.replace("\r","\\r");
-        s=s.replace("\f","\\f");
-        s=s.replace("\b","\\b");
-        s=s.replace("\t","\\t");
-        s=s.replace("\u2028","\\u2028");
-        s=s.replace("\u2029","\\u2029");
-        return s;
-    }
+    private static final String installJs = ";\n" +
+            "(function() {\n" +
+            "\tconst namespace = 'wvjsb_namespace';\n" +
+            "\tconst proxyKey = namespace + '_wvjsb_proxy';\n" +
+            "\n" +
+            "\tfunction getProxy() {\n" +
+            "\t\treturn window[proxyKey];\n" +
+            "\t}\n" +
+            "\n" +
+            "\tfunction setProxy(proxy) {\n" +
+            "\t\twindow[proxyKey] = proxy;\n" +
+            "\t};\n" +
+            "\n" +
+            "\tlet proxy = getProxy();\n" +
+            "\tif (proxy) return 'wvjsb proxy was already installed';\n" +
+            "\tconst queryURL = 'https://wvjsb/' + namespace + '/query';\n" +
+            "\tconst messageBuffers = [];\n" +
+            "\tconst clients = {};\n" +
+            "\tconst messageHandlerKey = namespace;\n" +
+            "\tconst sendToClient = function(client, message) {\n" +
+            "\t\tconst data = {};\n" +
+            "\t\tdata[namespace] = message;\n" +
+            "\t\tclient.postMessage(data, '*');\n" +
+            "\t}\n" +
+            "\tconst sendToServer = (function() {\n" +
+            "\t\tlet v = null;\n" +
+            "\t\ttry {\n" +
+            "\t\t\tv = window[messageHandlerKey].postMessage; //android WebView\n" +
+            "\t\t\tif (v) return function(message) {\n" +
+            "\t\t\t\ttry {\n" +
+            "\t\t\t\t\twindow[messageHandlerKey].postMessage(JSON.stringify(message));\n" +
+            "\t\t\t\t} catch (e) {}\n" +
+            "\t\t\t};\n" +
+            "\t\t} catch (e) {}\n" +
+            "\t\ttry {\n" +
+            "\t\t\tv = webkit.messageHandlers[messageHandlerKey].postMessage; //WKWebView\n" +
+            "\t\t\tif (v) return function(message) {\n" +
+            "\t\t\t\ttry {\n" +
+            "\t\t\t\t\twebkit.messageHandlers[messageHandlerKey].postMessage(JSON.stringify(message));\n" +
+            "\t\t\t\t} catch (e) {}\n" +
+            "\t\t\t};\n" +
+            "\t\t} catch (e) {}\n" +
+            "\t\tv = function(message) { //iOS UIWebView WebView\n" +
+            "\t\t\ttry {\n" +
+            "\t\t\t\tmessageBuffers.push(JSON.stringify(message));\n" +
+            "\t\t\t\tconst iframe = document.createElement('iframe');\n" +
+            "\t\t\t\tiframe.style.display = 'none';\n" +
+            "\t\t\t\tiframe.src = queryURL;\n" +
+            "\t\t\t\tdocument.documentElement.appendChild(iframe);\n" +
+            "\t\t\t\tsetTimeout(function() {\n" +
+            "\t\t\t\t\tdocument.documentElement.removeChild(iframe);\n" +
+            "\t\t\t\t}, 1);\n" +
+            "\t\t\t} catch (e) {}\n" +
+            "\t\t};\n" +
+            "\t\treturn v;\n" +
+            "\t})();\n" +
+            "\tproxy = {\n" +
+            "\t\tquery: function() {\n" +
+            "\t\t\tconst jsonString = JSON.stringify(messageBuffers);\n" +
+            "\t\t\tmessageBuffers.splice(0, messageBuffers.length);\n" +
+            "\t\t\treturn jsonString;\n" +
+            "\t\t},\n" +
+            "\t\tsend: function(jsonString) {\n" +
+            "\t\t\tconst message = JSON.parse(jsonString);\n" +
+            "\t\t\tconst {\n" +
+            "\t\t\t\tto\n" +
+            "\t\t\t} = message;\n" +
+            "\t\t\tconst client = clients[to];\n" +
+            "\t\t\tif (client) sendToClient(client,message);\n" +
+            "\t\t\treturn 'true';\n" +
+            "\t\t}\n" +
+            "\t}\n" +
+            "\tsetProxy(proxy);\n" +
+            "\n" +
+            "\twindow.addEventListener('message', function({\n" +
+            "\t\tsource, data\n" +
+            "\t}) {\n" +
+            "\t\ttry {\n" +
+            "\t\t\tconst message = data[namespace];\n" +
+            "\t\t\tif (!message) return;\n" +
+            "\t\t\tconst {\n" +
+            "\t\t\t\tfrom = null, to = null\n" +
+            "\t\t\t} = message;\n" +
+            "\t\t\tif (!from) return;\n" +
+            "\t\t\tlet client = clients[from];\n" +
+            "\t\t\tif (client) {\n" +
+            "\t\t\t\tif (client != source) {\n" +
+            "\t\t\t\t\tthrow 'client window mismatched';\n" +
+            "\t\t\t\t}\n" +
+            "\t\t\t} else {\n" +
+            "\t\t\t\tclients[from] = source;\n" +
+            "\t\t\t}\n" +
+            "\t\t\tif (to != namespace) return;\n" +
+            "\t\t\tsendToServer(message);\n" +
+            "\t\t} catch (e) {}\n" +
+            "\t});\n" +
+            "\n" +
+            "\tfunction broadcast(wd, data) {\n" +
+            "\t\twd.postMessage(data, '*');\n" +
+            "\t\tconst frames = wd.frames;\n" +
+            "\t\tfor (let i = 0; i < frames.length; i++) {\n" +
+            "\t\t\tbroadcast(frames[i]);\n" +
+            "\t\t}\n" +
+            "\t};\n" +
+            "\n" +
+            "\tfunction proxyConnect() {\n" +
+            "\t\tconst data = {};\n" +
+            "\t\tdata[namespace] = {from:proxyKey,type:'connect'};\n" +
+            "\t\tbroadcast(window, data);\n" +
+            "\t}\n" +
+            "\n" +
+            "\tfunction proxyDisconnect() {\n" +
+            "\t\tsendToServer({from:proxyKey,to:namespace,type:'disconnect'});\n" +
+            "\t\tconst data = {};\n" +
+            "\t\tdata[namespace] = {from:proxyKey,type:'disconnect'};\n" +
+            "\t\tbroadcast(window, data);\n" +
+            "\t}\n" +
+            "\n" +
+            "\twindow.addEventListener('unload', function() {\n" +
+            "\t\tproxyDisconnect();\n" +
+            "\t});\n" +
+            "\n" +
+            "\tproxyConnect();\n" +
+            "\treturn 'wvjsb proxy was installed';\n" +
+            "})();";
 }
