@@ -84,6 +84,7 @@ public final class Server {
             public void onReceiveValue(String value) {
                 try{
                     // TODO: 2019-05-03 Deserialization error
+                    value = StringEscapeUtils.unescapeJavaScript(value);
                     List list = (List)Json.toJavaObject(value);
                     for (Object o :list){
                         postMessage((String)o);
@@ -91,7 +92,6 @@ public final class Server {
                 }catch (Throwable t){
                     t.printStackTrace();
                 }
-
             }
         });
     }
@@ -293,7 +293,7 @@ public final class Server {
         this.webView=webView;
         this.namespace=namespace;
         this.proxy=namespace+"_wvjsb_proxy";
-        this.webView.addJavascriptInterface(this,namespace);
+//        this.webView.addJavascriptInterface(this,namespace);
     }
 
     private final Map<String,Handler> handlers=new HashMap<>();
