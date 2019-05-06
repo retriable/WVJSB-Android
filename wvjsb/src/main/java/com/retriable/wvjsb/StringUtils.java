@@ -8,6 +8,7 @@ import java.io.StringWriter;
 
 final class StringUtils {
 
+    @SuppressWarnings("unused")
     @Contract("null -> fail")
     @NotNull
     static String unescape(@Nullable String s) throws Throwable{

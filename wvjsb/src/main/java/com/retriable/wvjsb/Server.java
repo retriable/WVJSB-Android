@@ -20,7 +20,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class Server {
-
+    /**
+     * get instance of Server.server's life cycle is associated web view.
+     * @param webView web view.
+     * @param namespace namespace is used to mark different service.
+     * @return server
+     */
     public static Server instance(WebView webView, @Nullable String namespace){
         if (null==namespace||namespace.isEmpty()){
             namespace="wvjsb_namespace";
@@ -28,7 +33,12 @@ public final class Server {
         return get(webView, namespace, true);
     }
 
-    /*can handle url*/
+    /**
+     * check that any server can handle url.
+     * @param webView web view
+     * @param urlString url string
+     * @return can?
+     */
     public static boolean canHandle(WebView webView,@Nullable String urlString){
         Matcher matcher=pattern.matcher(urlString);
         if (!matcher.find()) return false;
@@ -50,6 +60,11 @@ public final class Server {
         return true;
     }
 
+    /**
+     * create a handler by event type.
+     * @param type event type
+     * @return handler
+     */
     public final Handler on(String type){
         Handler handler;
         synchronized (handlers){

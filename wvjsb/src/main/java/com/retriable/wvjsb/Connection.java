@@ -10,9 +10,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class Connection {
-
+    /**
+     * client info
+     */
     public final @Nullable Object info;
 
+    /**
+     * event to client
+     * @param type event type
+     * @param parameter event parameter
+     * @return operation
+     */
     public Operation event(String type,@Nullable Object parameter){
 
         final String id = String.valueOf(nextSeq.incrementAndGet());

@@ -10,7 +10,11 @@ import com.retriable.wvjsb.Functions.Function3Void;
 import org.jetbrains.annotations.Nullable;
 
 public final class Operation {
-
+    /**
+     * ack from client
+     * @param ack ack handler
+     * @return current operation
+     */
     public Operation onAck(final Function3Void<Operation,Object,Throwable> ack){
         synchronized (this){
             if (ok){
@@ -29,6 +33,11 @@ public final class Operation {
         }
     }
 
+    /**
+     * set timeout for operation
+     * @param timeout timeout
+     * @return current operation
+     */
     public Operation timeout(long timeout){
         if (timeout<=0){
             return this;
