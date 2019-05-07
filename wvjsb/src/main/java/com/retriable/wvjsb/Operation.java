@@ -7,7 +7,7 @@ import com.retriable.wvjsb.Functions.Function1Void;
 import com.retriable.wvjsb.Functions.Function2Void;
 import com.retriable.wvjsb.Functions.Function3Void;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public final class Operation {
     /**
@@ -15,7 +15,7 @@ public final class Operation {
      * @param ack ack handler
      * @return current operation
      */
-    public Operation onAck(final Function3Void<Operation,Object,Throwable> ack){
+    public Operation onAck(@NotNull final Function3Void<Operation,Object,Throwable> ack){
         synchronized (this){
             if (ok){
                 return this;
@@ -98,7 +98,7 @@ public final class Operation {
         super();
     }
 
-    void doAck(@Nullable Object parameter,@Nullable Throwable throwable){
+    void doAck(Object parameter,Throwable throwable){
         synchronized (this){
             if (ok){
                 return;

@@ -10,6 +10,7 @@ import com.retriable.wvjsb.Functions.Function0Void;
 import com.retriable.wvjsb.Functions.Function2Void;
 import com.retriable.wvjsb.Functions.Function3Void;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public final class Server {
      * @param namespace namespace is used to mark different service.
      * @return server
      */
-    public static Server instance(WebView webView, @Nullable String namespace){
+    public static Server instance(@NotNull WebView webView,@Nullable String namespace){
         if (null==namespace||namespace.isEmpty()){
             namespace="wvjsb_namespace";
         }
@@ -39,7 +40,7 @@ public final class Server {
      * @param urlString url string
      * @return can?
      */
-    public static boolean canHandle(WebView webView,@Nullable String urlString){
+    public static boolean canHandle(@NotNull WebView webView,@Nullable String urlString){
         Matcher matcher=pattern.matcher(urlString);
         if (!matcher.find()) return false;
         final String namespace=matcher.group(1);
@@ -65,7 +66,7 @@ public final class Server {
      * @param type event type
      * @return handler
      */
-    public final Handler on(String type){
+    public final Handler on(@NotNull String type){
         Handler handler;
         synchronized (handlers){
             handler = handlers.get(type);

@@ -1,6 +1,5 @@
 package com.retriable.wvjsb;
 
-import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -19,14 +18,17 @@ final class Json {
      * @return string
      * @throws Throwable throwable
      */
-    static String toJsonString(@Nullable Object o) throws Throwable{
+    static String toJsonString(Object o) throws Throwable{
+        if (null==o){
+            throw new Throwable("object can't be null");
+        }
         if ((o instanceof Map) || (o instanceof List)){
             Object oo = toJSONObject(o);
             if (null!=oo){
                 return oo.toString();
             }
         }
-       throw new Throwable("only support Map and List");
+        throw new Throwable("only support Map and List");
     }
 
     /**
@@ -35,7 +37,7 @@ final class Json {
      * @return map or list
      * @throws Throwable throwable
      */
-    static Object toJavaObject(@Nullable String s) throws Throwable{
+    static Object toJavaObject(String s) throws Throwable{
         if (null==s){
             throw new NullPointerException("json string can't be null");
         }
@@ -53,7 +55,7 @@ final class Json {
      * @throws Throwable throwable
      */
     @SuppressWarnings("unchecked")
-     private static @Nullable Object toJSONObject(Object o) throws Throwable {
+     private static Object toJSONObject(Object o) throws Throwable {
         if (o instanceof Map){
             final JSONObject object = new JSONObject();
             Map<String,Object> map = (Map<String,Object>)o;
@@ -80,7 +82,7 @@ final class Json {
      * @return  Object
      * @throws Throwable throwable
      */
-    private static @Nullable Object toJavaObject(@Nullable Object o,Boolean strict) throws Throwable{
+    private static Object toJavaObject(Object o,Boolean strict) throws Throwable{
         if (null==o){
             return null;
         }

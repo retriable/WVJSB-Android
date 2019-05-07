@@ -3,6 +3,7 @@ package com.retriable.wvjsb;
 import com.retriable.wvjsb.Functions.Function1Void;
 import com.retriable.wvjsb.Functions.Function3Void;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -21,7 +22,7 @@ public final class Connection {
      * @param parameter event parameter
      * @return operation
      */
-    public Operation event(String type,@Nullable Object parameter){
+    public Operation event(@NotNull String type, @Nullable Object parameter){
 
         final String id = String.valueOf(nextSeq.incrementAndGet());
         final Operation opt=new Operation();
@@ -53,13 +54,15 @@ public final class Connection {
 
     Function3Void<String,String,Object> send;
 
-    Connection(@Nullable Object info){
+    Connection(Object info){
         super();
         this.info=info;
     }
 
-    void ack(String id,@Nullable Object parameter,@Nullable Throwable throwable){
-
+    void ack(String id, Object parameter, Throwable throwable){
+        if (id ==null){
+            return;
+        }
         Operation operation;
         synchronized (operations){
             operation = operations.get(id);

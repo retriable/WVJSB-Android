@@ -1,8 +1,6 @@
 package com.retriable.wvjsb;
 
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.StringWriter;
 
@@ -10,8 +8,7 @@ final class StringUtils {
 
     @SuppressWarnings("unused")
     @Contract("null -> fail")
-    @NotNull
-    static String unescape(@Nullable String s) throws Throwable{
+    static String unescape( String s) throws Throwable{
         if (null == s){
             throw new Throwable("string must not be null");
         }
@@ -78,8 +75,7 @@ final class StringUtils {
     }
 
     @Contract("null -> fail")
-    @NotNull
-    static String escape(@Nullable String s) throws Throwable{
+    static String escape(String s) throws Throwable{
         if (null == s){
             throw new Throwable("string must not be null");
         }
