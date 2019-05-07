@@ -9,7 +9,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 3
+        versionCode 4
         versionName "1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -38,7 +38,7 @@ publish {
     userOrg = 'retriable'
     groupId = 'com.retriable'
     artifactId = 'wvjsb'
-    publishVersion = '1.0.3'
-    desc = '1.0.3'
+    publishVersion = '1.0.4'
+    desc = '1.0.4'
     website = 'https://github.com/retriable/WVJSB-Android'
 }
